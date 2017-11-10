@@ -59,6 +59,8 @@ async def cmd_tasks(message):
     is_group = message.chat.type != 'private'
     if not is_group:
         tasks = await api.get_tasks(token)
+        if not tasks:
+            await message.chat.message('Je hebt geen taken!')
     else:
         group_id = VIA_GROUPS.get(message.chat.id)
         if group_id is None:
@@ -67,6 +69,8 @@ async def cmd_tasks(message):
             return
 
         tasks = await api.get_group_user_tasks(token, group_id)
+        if not tasks:
+            await message.chat.message('Je hebt geen taken voor deze groep!')
 
     msg = messages.tasks_message(tasks, is_group)
     await message.chat.message(msg, parse_mode='HTML')
@@ -301,7 +305,8 @@ async def callback_tasks(query, _, args):
 
     tasks = await api.get_group_user_tasks(token, group_id, user_id)
     msg = messages.tasks_message(tasks, True, user_name)
-    await query.message.chat.message(msg, parse_mode='HTML')
+    await query.message.chat.message(msg, parse_mode='HTML',
+                                     disable_web_page_preview=True)
 
 
 CALLBACK_HANDLERS = {
