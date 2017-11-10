@@ -1,0 +1,3 @@
+[submodule "telewalrus"]
+	path = telewalrus
+	url = git@github.com:SijmenSchoon/telewalrus.git
