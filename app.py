@@ -19,7 +19,7 @@ BOT = telewalrus.bot.Bot(TG_TOKEN)
 async def cmd_start(message):
     name = message.from_user.first_name
 
-    if message.from_user.id not in VIA_USERS:
+    if message.from_user.id not in USER_TOKENS:
         await message.chat.message(messages.stranger_message(name))
         return
 
@@ -67,7 +67,6 @@ async def cmd_tasks(message):
             return
 
         tasks = await api.get_group_user_tasks(token, group_id)
-        print(json.dumps(tasks, indent=4))
 
     msg = messages.tasks_message(tasks, is_group)
     await message.chat.message(msg, parse_mode='HTML')
@@ -181,22 +180,30 @@ async def cmd_task(message):
 
 @BOT.command('done')
 async def cmd_done(message):
-    user_id = VIA_USERS.get(message.from_user.id)
-    if not user_id:
+    token = USER_TOKENS.get(message.from_user.id)
+    if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
         return
 
-    task, task_code = await get_task_from_args(message)
+    group_id = None
+    if message.chat.type != 'private':
+        group_id = VIA_GROUPS.get(message.chat.id)
+        if not group_id:
+            await message.chat.message(
+                'pimpy is nog niet ingeschakeld voor deze groep :/')
+            return
+
+    task, task_code = await get_task_from_args(token, message, group_id)
     if not task:
         return
 
-    if not user_id in (user['id'] for user in task['users']):
-        msg = f'Je bent geen eigenaar van de taak {task_code}!'
+    try:
+        await api.set_task_status(token, task['id'], 'done')
+    except api.PermissionDeniedError:
+        msg = f'Je mag taak <code>[{task_code}]</code> niet aanpassen!'
         await message.chat.message(msg, parse_mode='HTML')
         return
-
-    await api.set_task_status(task['id'], 'done')
 
     msg = f'Taak {task_code} staat nu op done!'
     await message.chat.message(msg)
@@ -219,6 +226,12 @@ async def cmd_addtask(message):
 
 @BOT.command('actie')
 async def cmd_actie(message):
+    token = USER_TOKENS.get(message.from_user.id)
+    if not token:
+        msg = messages.stranger_message(message.from_user.first_name)
+        await message.chat.message(msg)
+        return
+
     if message.chat.type == 'private':
         await message.chat.message(
             'Deze functie werkt alleen in commissiechats.')
@@ -244,8 +257,9 @@ async def cmd_actie(message):
 
         return
 
-    task = await api.add_group_task(group_id, match.group(1), match.group(2))
-    msg, reply_markup = messages.task_message(task, None, True)
+    task = await api.add_group_task(
+        token, group_id, match.group(1), match.group(2))
+    msg, reply_markup = messages.task_message(task, True)
     task_code = baas32.encode(task['id'])
     msg = f'Taak <code>[{task_code}]</code> aangemaakt!\n\n' + msg
 
@@ -299,7 +313,6 @@ async def callback_tasks(query, _, args):
     user_name = ' '.join(args[1:])
 
     tasks = await api.get_group_user_tasks(token, group_id, user_id)
-    print(json.dumps(tasks, indent=4))
     msg = messages.tasks_message(tasks, True, user_name)
     await query.message.chat.message(msg, parse_mode='HTML')
 
