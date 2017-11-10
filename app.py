@@ -61,6 +61,7 @@ async def cmd_tasks(message):
         tasks = await api.get_tasks(token)
         if not tasks:
             await message.chat.message('Je hebt geen taken!')
+            return
     else:
         group_id = VIA_GROUPS.get(message.chat.id)
         if group_id is None:
@@ -71,6 +72,7 @@ async def cmd_tasks(message):
         tasks = await api.get_group_user_tasks(token, group_id)
         if not tasks:
             await message.chat.message('Je hebt geen taken voor deze groep!')
+            return
 
     msg = messages.tasks_message(tasks, is_group)
     await message.chat.message(msg, parse_mode='HTML')
