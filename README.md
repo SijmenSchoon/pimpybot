@@ -1,6 +1,9 @@
 # pimpybot
 
 ## Set-up
+Make sure to clone recursively: `git clone --recursive git@github.com:SijmenSchoon/pimpybot`.
+If you forgot, just run `git submodule init --update` after cloning.
+
 Copy `config.py.example` to `config.py`, and edit it as the comments say.
 
 Then, create a virtualenv (or not), then run `pip3 install -r requirements.txt`
@@ -9,5 +12,4 @@ Then, create a virtualenv (or not), then run `pip3 install -r requirements.txt`
 
 
 ## Running
-
 `python3 app.py`.
