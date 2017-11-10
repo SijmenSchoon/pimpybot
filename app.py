@@ -124,7 +124,7 @@ async def cmd_grouptasks(message):
 
 
 async def get_task_from_args(token, message, group_id=None):
-    task_code = baas32.normalize(message.args)
+    task_code = baas32.normalize(message.args) if message.args else ''
     if not task_code:
         await message.chat.message(
             'Welke taak? Protip: zet de taakcode achter het commando.')
