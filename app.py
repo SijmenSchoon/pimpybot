@@ -11,7 +11,7 @@ import api
 import messages
 
 
-from config import VIA_USERS, VIA_GROUPS, TG_TOKEN, USER_TOKENS
+from config import VIA_GROUPS, TG_TOKEN, USER_TOKENS
 BOT = telewalrus.bot.Bot(TG_TOKEN)
 
 
@@ -207,21 +207,6 @@ async def cmd_done(message):
 
     msg = f'Taak {task_code} staat nu op done!'
     await message.chat.message(msg)
-
-
-@BOT.command('addtask')
-async def cmd_addtask(message):
-    user_id = VIA_USERS.get(message.from_user.id)
-    if not user_id:
-        msg = messages.stranger_message(message.from_user.first_name)
-        await message.chat.message(msg)
-        return
-
-    match = re.match(r'^([^"\' ]+|["\'][^"\']+["\']) (.*)$', message.args)
-    group = match.group(1).strip('\'"')
-    title = match.group(2).strip('\'"')
-
-    await message.chat.message(f'Groep: {group}\nTitel: {title}')
 
 
 @BOT.command('actie')
