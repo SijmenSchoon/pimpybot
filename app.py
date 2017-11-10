@@ -254,6 +254,8 @@ async def cmd_actie(message):
 
 
 async def callback_status(query, _, args):
+    await query.answer()
+
     token = USER_TOKENS.get(query.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
@@ -279,10 +281,11 @@ async def callback_status(query, _, args):
     await query.message.edit(msg, parse_mode='HTML',
                              reply_markup=json.dumps(reply_markup),
                              disable_web_page_preview=True)
-    await query.answer()
 
 
 async def callback_tasks(query, _, args):
+    await query.answer()
+
     token = USER_TOKENS.get(query.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
@@ -291,7 +294,6 @@ async def callback_tasks(query, _, args):
 
     group_id = VIA_GROUPS.get(query.message.chat.id)
     if not group_id:
-        await query.answer()
         return
 
     user_id = int(args[0])
