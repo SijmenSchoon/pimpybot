@@ -1,8 +1,7 @@
 import urllib.parse
 import aiohttp
 
-SCHEME = 'http'
-NETLOC = 'localhost:5000'
+from config import VIA_HOST, VIA_SCHEME
 
 
 class ApiError(Exception): pass
@@ -16,7 +15,7 @@ class InternalServerError(ApiError): pass
 def build_url(path, query_args=None):
     query = urllib.parse.urlencode(query_args if query_args else {})
     parse_result = urllib.parse.ParseResult(
-        scheme=SCHEME, netloc=NETLOC, path=path,
+        scheme=VIA_SCHEME, netloc=VIA_HOST, path=path,
         params='', query=query, fragment='')
     return urllib.parse.urlunparse(parse_result)
 

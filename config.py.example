@@ -1,3 +1,4 @@
+# Telegram bot token, as [BotFather](http://tg.me/BotFather) sends it.
 TG_TOKEN = '<getthisfrombotfather>'
 
 # Dictionary from Telegram user ID to their via API access token.
@@ -9,3 +10,6 @@ USER_TOKENS = {
 VIA_GROUPS = {
     -1020304050: 12,
 }
+
+VIA_SCHEME = 'http'
+VIA_HOST = 'localhost:5000'
