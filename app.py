@@ -25,8 +25,11 @@ class Database:
             f = open('database.json', 'r')
         except OSError:
             print('database does not exist, generating from config')
-        else:
-            database = json.load(f)
+            Database.user_tokens = USER_TOKENS
+            Database.group_ids = VIA_GROUPS
+            return
+
+        database = json.load(f)
 
         Database.user_tokens = database.get('user_tokens') or USER_TOKENS
         Database.group_ids = database.get('group_ids') or VIA_GROUPS
