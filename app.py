@@ -15,16 +15,58 @@ from config import VIA_GROUPS, TG_TOKEN, USER_TOKENS
 BOT = telewalrus.bot.Bot(TG_TOKEN)
 
 
+class Database:
+    user_tokens = {}
+    group_ids = {}
+
+    @staticmethod
+    def load():
+        try:
+            f = open('database.json', 'r')
+        except OSError:
+            print('database does not exist, generating from config')
+        else:
+            database = json.load(f)
+
+        Database.user_tokens = database.get('user_tokens') or USER_TOKENS
+        Database.group_ids = database.get('group_ids') or VIA_GROUPS
+
+    @staticmethod
+    def save():
+        database = {
+            'user_tokens': Database.user_tokens,
+            'group_ids': Database.group_ids
+        }
+        with open('database.json', 'w') as f:
+            json.dump(database, f, indent=4)
+
+
 @BOT.command('start')
 async def cmd_start(message):
     name = message.from_user.first_name
-
-    if message.from_user.id not in USER_TOKENS:
-        await message.chat.message(messages.stranger_message(name))
+    if str(message.from_user.id) in Database.user_tokens:
+        await message.chat.message(
+            f'Welkom terug, {name}! Zie /tasks om te zien welke taken je open '
+            f'hebt staan.')
         return
 
+    token = message.args.strip()
+    if not token:
+        await message.chat.message(
+            f'Hee hallo, {name}! Wil je me testen? Vraag dan even aan @sijman '
+            f'of hij je je API token wil geven. Dan kan je meteen aan de slag!')
+        return
+
+    try:
+        await api.test_token(token)
+    except api.PermissionDeniedError:
+        await message.chat.message(
+            f'Hallo, {name}! Helaas is dat geen geldige API token...')
+
+    Database.user_tokens[str(message.from_user.id)] = token
     await message.chat.message(
-        f'Heya, {name}! Zie /tasks om te zien welke taken je open hebt staan.')
+        f'Welkom, {name}! Zie /tasks om te zien welke taken je open hebt '
+        f'staan.')
 
 
 @BOT.command('chatinfo')
@@ -50,7 +92,7 @@ admins: {admins}
 
 @BOT.command('tasks')
 async def cmd_tasks(message):
-    token = USER_TOKENS.get(message.from_user.id)
+    token = Database.user_tokens.get(message.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
@@ -63,7 +105,7 @@ async def cmd_tasks(message):
             await message.chat.message('Je hebt geen taken!')
             return
     else:
-        group_id = VIA_GROUPS.get(message.chat.id)
+        group_id = Database.group_ids.get(message.chat.id)
         if group_id is None:
             await message.chat.message(
                 'pimpy is nog niet ingeschakeld voor deze groep :/')
@@ -80,7 +122,7 @@ async def cmd_tasks(message):
 
 @BOT.command('grouptasks')
 async def cmd_grouptasks(message):
-    token = USER_TOKENS.get(message.from_user.id)
+    token = Database.user_tokens.get(message.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
@@ -91,7 +133,7 @@ async def cmd_grouptasks(message):
             'Dit commando werkt alleen in commissiechats.')
         return
 
-    group_id = VIA_GROUPS.get(message.chat.id)
+    group_id = Database.group_ids.get(message.chat.id)
     if not group_id:
         await message.chat.message(
             'pimpy is nog niet ingeschakeld voor deze groep :/')
@@ -159,7 +201,7 @@ async def get_task_from_args(token, message, group_id=None):
 
 @BOT.command('task')
 async def cmd_task(message):
-    token = USER_TOKENS.get(message.from_user.id)
+    token = Database.user_tokens.get(message.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
@@ -167,7 +209,7 @@ async def cmd_task(message):
 
     group_id = None
     if message.chat.type != 'private':
-        group_id = VIA_GROUPS.get(message.chat.id)
+        group_id = Database.group_ids.get(message.chat.id)
         if not group_id:
             await message.chat.message(
                 'pimpy is nog niet ingeschakeld voor deze groep :/')
@@ -186,7 +228,7 @@ async def cmd_task(message):
 
 @BOT.command('done')
 async def cmd_done(message):
-    token = USER_TOKENS.get(message.from_user.id)
+    token = Database.user_tokens.get(message.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
@@ -194,7 +236,7 @@ async def cmd_done(message):
 
     group_id = None
     if message.chat.type != 'private':
-        group_id = VIA_GROUPS.get(message.chat.id)
+        group_id = Database.group_ids.get(message.chat.id)
         if not group_id:
             await message.chat.message(
                 'pimpy is nog niet ingeschakeld voor deze groep :/')
@@ -217,7 +259,7 @@ async def cmd_done(message):
 
 @BOT.command('actie')
 async def cmd_actie(message):
-    token = USER_TOKENS.get(message.from_user.id)
+    token = Database.user_tokens.get(message.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
@@ -228,7 +270,7 @@ async def cmd_actie(message):
             'Deze functie werkt alleen in commissiechats.')
         return
 
-    group_id = VIA_GROUPS.get(message.chat.id)
+    group_id = Database.group_ids.get(message.chat.id)
     if not group_id:
         await message.chat.message(
             'pimpy is nog niet ingeschakeld voor deze groep :/')
@@ -262,7 +304,7 @@ async def cmd_actie(message):
 async def callback_status(query, _, args):
     await query.answer()
 
-    token = USER_TOKENS.get(query.from_user.id)
+    token = Database.user_tokens.get(query.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
@@ -292,7 +334,7 @@ async def callback_status(query, _, args):
 async def callback_tasks(query, _, args):
     await query.answer()
 
-    token = USER_TOKENS.get(query.from_user.id)
+    token = Database.user_tokens.get(query.from_user.id)
     if not token:
         msg = messages.stranger_message(message.from_user.first_name)
         await message.chat.message(msg)
@@ -323,11 +365,15 @@ async def callback(query):
     if handler:
         await handler(query, command, args)
 
+
+Database.load()
 while True:
     try:
         BOT.run()
     except KeyboardInterrupt:
-        print('\nhee doei hè')
+        print('\nsaving database')
+        Database.save()
+        print('hee doei hè')
         break
     except:
         pass

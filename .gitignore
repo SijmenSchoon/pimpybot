@@ -242,5 +242,6 @@ Session.vim
 tags
 
 config.py
+database.json
 
 # End of https://www.gitignore.io/api/vim,macos,emacs,python,sublimetext

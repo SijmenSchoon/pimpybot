@@ -19,6 +19,7 @@ def build_url(path, query_args=None):
         params='', query=query, fragment='')
     return urllib.parse.urlunparse(parse_result)
 
+
 def check_status(status):
     if status == 400:
         raise BadRequestError
@@ -52,6 +53,11 @@ async def put_json(url, obj, token=None):
         async with session.put(url, json=obj, headers=headers) as resp:
             check_status(resp.status)
             return await resp.json()
+
+
+async def test_token(token):
+    url = build_url('/pimpy/api/test_token/')
+    return await get_json(url, token=token)
 
 
 async def get_tasks(token, group_id=None):
