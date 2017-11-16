@@ -56,7 +56,8 @@ async def cmd_start(message):
     token = message.args.strip()
     if not token:
         await message.chat.message(
-            f'Hee hallo, {name}! Wil je me testen? Vraag dan even aan @sijman '
+            f'Hee hallo, {name}! Ik draai nog met de acceptatieversie van de via-site. '
+            f'Wil je me alsnog testen? Vraag dan even aan @sijman '
             f'of hij je je API token wil geven. Dan kan je meteen aan de slag!')
         return
 
